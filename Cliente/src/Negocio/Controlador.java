@@ -6,7 +6,6 @@
 package Negocio;
 
 import Modelo.Alfabeto;
-import java.net.Socket;
 import java.util.ArrayList;
 
 /**
@@ -14,29 +13,65 @@ import java.util.ArrayList;
  * @author Berrocal
  */
 public class Controlador {
-    private Socket socket;
+    private SocketCliente cliente;
     
     public Controlador(){
-        socket = new Socket();
+        cliente = new SocketCliente();
     }
     
+    /**
+     * Se encarga de encriptar o desencriptar
+     * @param dto Objeto con la información necesaria para la operación
+     * @return ArrayList de resultados de la encriptación/desencriptación
+     */
     public ArrayList<String> operar(DTO dto){
-        return null;
+        dto = realizarPeticion(dto, TipoOperacion.OPERAR);
+        return dto.getResultados();
     }
     
-    public Alfabeto consultarAlfabeto(){
-        return null;
+    /**
+     * Consulta el actual alfabeto por defecto
+     * @return Alfabeto por defecto en el servidor
+     */
+    public String consultarAlfabeto(){
+        DTO dto = realizarPeticion(new DTO(), TipoOperacion.CONSULTAR_ALFABETO);
+        return dto.getAlfabeto();
     }
     
+    /**
+     * Consulta los alfabetos existentes en el servidor
+     * @return ArrayList de alfabetos existentes en el servidor
+     */
     public ArrayList<Alfabeto> consultarAlfabetos(){
         return null;
     }
     
+    /**
+     * Consulta los algoritmos existentes en el servidor
+     * @return ArrayList de algoritmos existentes en el servidor
+     */
     public ArrayList<String> consultarAlgoritmos(){
-        return null;
+        DTO dto = realizarPeticion(new DTO(), TipoOperacion.CONSULTAR_ALGORITMOS);
+        return dto.getNombresAlgoritmos();
     }
     
+    /**
+     * Consulta los archivos de salida existentes en el servidor
+     * @return ArrayList de archivos de salida existentes en el servidor
+     */
     public ArrayList<String> consultarArchivosSalida(){
-        return null;
+        DTO dto = realizarPeticion(new DTO(), TipoOperacion.CONSULTAR_ARCHIVOS);
+        return dto.getTiposArchivos();
+    }
+    
+    /**
+     * Se encarga de realizar todas las peticiones al servidor
+     * @param dto Objeto con la información necesaria para la petición
+     * @param operacion TipoOperacion que diferencia cada operación a realizar
+     * @return DTO con los resultados de la operación en el servidor
+     */
+    private DTO realizarPeticion(DTO dto, TipoOperacion operacion){
+        dto.setTipoOperacion(operacion);
+        return cliente.realizarPeticion(dto);
     }
 }

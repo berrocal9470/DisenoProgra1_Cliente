@@ -26,6 +26,9 @@ public class DTO implements Serializable{
     //nuevo alfabeto para agregar/modificar
     private String alfabeto;
     
+    //tipo de operación a realizar
+    private TipoOperacion tipoOperacion;
+    
     public DTO(){ }
     
     // GETTERS Y SETTERS
@@ -100,6 +103,14 @@ public class DTO implements Serializable{
 
     public void setNombresAlgoritmos(ArrayList<String> nombresAlgoritmos) {
         this.nombresAlgoritmos = nombresAlgoritmos;
+    }
+
+    public TipoOperacion getTipoOperacion() {
+        return tipoOperacion;
+    }
+
+    public void setTipoOperacion(TipoOperacion tipoOperacion) {
+        this.tipoOperacion = tipoOperacion;
     }
     
 }

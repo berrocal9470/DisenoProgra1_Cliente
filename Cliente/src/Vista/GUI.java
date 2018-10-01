@@ -44,7 +44,8 @@ public class GUI extends javax.swing.JFrame {
     }
     
     private void mostrarAlfabeto(){
-        Alfabeto alfabeto = controlador.consultarAlfabeto();
+        Alfabeto alfabeto = new Alfabeto();
+        alfabeto.setElementos(controlador.consultarAlfabeto());
         String elementos = alfabeto.getElementos();
         String resultado = "";
         
@@ -196,9 +197,7 @@ public class GUI extends javax.swing.JFrame {
         cmbxMetodos = new javax.swing.JComboBox<>();
         cmbxArchivos = new javax.swing.JComboBox<>();
         jScrollPane3 = new javax.swing.JScrollPane();
-        lstMetodos = new javax.swing.JList<>();
         jScrollPane4 = new javax.swing.JScrollPane();
-        lstArchivos = new javax.swing.JList<>();
         btnAnadirMetodo = new javax.swing.JButton();
         btnAnadirArchivos = new javax.swing.JButton();
         btnQuitarMetodo = new javax.swing.JButton();
