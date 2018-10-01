@@ -3,19 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Vista;
+package Negocio;
 
 /**
  *
  * @author Berrocal
  */
-public class Cliente {
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        // TODO code application logic here
-    }
-    
+public enum tipoOperacion {
+    OPERAR, CONSULTAR_ALFABETO, CONSULTAR_ALFABETOS, CONSULTAR_ALGORITMOS,
+    CONSULTAR_ARCHIVOS 
 }
