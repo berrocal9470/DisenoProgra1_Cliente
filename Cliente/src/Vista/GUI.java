@@ -7,13 +7,14 @@ package Vista;
 
 import Modelo.Alfabeto;
 import Negocio.Controlador;
-import Negocio.DTO;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Scanner;
 import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
+
+import comunicacion.DTO;
 
 /**
  *

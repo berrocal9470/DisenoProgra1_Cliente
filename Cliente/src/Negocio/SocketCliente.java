@@ -13,6 +13,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import comunicacion.DTO;
+import comunicacion.TipoOperacion;
+
 /**
  *
  * @author Berrocal

@@ -8,6 +8,9 @@ package Negocio;
 import Modelo.Alfabeto;
 import java.util.ArrayList;
 
+import comunicacion.DTO;
+import comunicacion.TipoOperacion;
+
 /**
  *
  * @author Berrocal
