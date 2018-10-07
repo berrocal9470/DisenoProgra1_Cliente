@@ -38,7 +38,7 @@ public class Controlador {
      */
     public String consultarAlfabeto(){
         DTO dto = realizarPeticion(new DTO(), TipoOperacion.CONSULTAR_ALFABETO);
-        return dto.getAlfabeto();
+        return dto.getElementosAlfabeto();
     }
     
     /**
