@@ -10,13 +10,13 @@ package Negocio;
  * @author kathe
  */
 public class FraseFactory {
-    public static Frase getFrase(int tipo){
+    public static Frase getFrase(TipoFrase tipo){
         Frase f = null;
         switch(tipo){
-            case 1 : f = new FraseConsDup();
-            case 2 : f = new FraseConsNoDup();
-            case 3 : f = new FraseNoConsNoDup();
-            //case 4 : ?? leer?
+            case FraseConsDup : f = new FraseConsDup();
+            case FraseConsNoDup : f = new FraseConsNoDup();
+            case FraseNoConsNoDup : f = new FraseNoConsNoDup();
+            //case FraseArchivo : ?? leer?
         }
         return f;
     } 
