@@ -10,6 +10,13 @@ package Negocio;
  * @author kathe
  */
 public abstract class Frase {
+    public int longitud;
+    
+    
     public abstract String generar();
+
+    public void setLongitud(int longitud) {
+        this.longitud = longitud;
+    }
     
 }
