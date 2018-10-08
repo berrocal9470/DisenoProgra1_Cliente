@@ -270,6 +270,29 @@ public class GUI extends javax.swing.JFrame {
         btnExaminar.setEnabled(estado);
         txtTextoInicial.setEnabled(estado);
     }
+    
+    private void generacionFrases(){
+        String frase;
+        if(txtLongitud.getText().equals("")){
+            JOptionPane.showMessageDialog(this, "Debe ingresar una longitud para la frase.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        else{
+            if(rbtnConsDup.isSelected()){
+            frase = controlador.generacionFrase("FraseConsDup", Integer.parseInt(txtLongitud.getText()), txtElementos.getText());
+            }
+            else if(rbtnConsNoDup.isSelected()){
+                frase = controlador.generacionFrase("FraseConsNoDup", Integer.parseInt(txtLongitud.getText()), txtElementos.getText());
+            }
+            else{
+                frase = controlador.generacionFrase("FraseNoConsNoDup", Integer.parseInt(txtLongitud.getText()), txtElementos.getText());
+            }
+            txtTextoInicial.setText(frase);
+        }
+        
+        
+    }
+    
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -296,7 +319,9 @@ public class GUI extends javax.swing.JFrame {
         cmbxMetodos = new javax.swing.JComboBox<>();
         cmbxArchivos = new javax.swing.JComboBox<>();
         jScrollPane3 = new javax.swing.JScrollPane();
+        lstMetodos = new javax.swing.JList<>();
         jScrollPane4 = new javax.swing.JScrollPane();
+        lstArchivos = new javax.swing.JList<>();
         btnAnadirMetodo = new javax.swing.JButton();
         btnAnadirArchivos = new javax.swing.JButton();
         btnQuitarMetodo = new javax.swing.JButton();
@@ -313,6 +338,8 @@ public class GUI extends javax.swing.JFrame {
         rbtnIngresar = new javax.swing.JRadioButton();
         btnExaminar = new javax.swing.JButton();
         btnGenerarFrase = new javax.swing.JButton();
+        txtLongitud = new javax.swing.JTextField();
+        jLabel8 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -449,6 +476,19 @@ public class GUI extends javax.swing.JFrame {
 
         btnGenerarFrase.setText("Generar");
         btnGenerarFrase.setEnabled(false);
+        btnGenerarFrase.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnGenerarFraseActionPerformed(evt);
+            }
+        });
+
+        txtLongitud.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtLongitudActionPerformed(evt);
+            }
+        });
+
+        jLabel8.setText("Longitud");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -507,12 +547,17 @@ public class GUI extends javax.swing.JFrame {
                                                         .addComponent(rbtnConsNoDup)
                                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                    .addComponent(rbtnIngresar)
-                                                    .addComponent(rbtnNoConsNoDup))))
+                                                    .addComponent(rbtnNoConsNoDup)
+                                                    .addGroup(layout.createSequentialGroup()
+                                                        .addComponent(rbtnIngresar)
+                                                        .addGap(25, 25, 25)
+                                                        .addComponent(jLabel8)
+                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                                        .addComponent(txtLongitud, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                                         .addGap(18, 18, 18)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                             .addComponent(btnGenerarFrase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addComponent(btnExaminar, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)))
+                                            .addComponent(btnExaminar, javax.swing.GroupLayout.PREFERRED_SIZE, 80, Short.MAX_VALUE)))
                                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                                         .addComponent(txtElementos, javax.swing.GroupLayout.Alignment.LEADING)
                                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
@@ -531,7 +576,7 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(225, 225, 225)
                         .addComponent(jLabel1)))
-                .addContainerGap(34, Short.MAX_VALUE))
+                .addContainerGap(42, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -554,7 +599,10 @@ public class GUI extends javax.swing.JFrame {
                     .addComponent(btnGenerarFrase))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(rbtnIngresar)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(rbtnIngresar)
+                        .addComponent(txtLongitud, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel8))
                     .addComponent(rbtnConsNoDup))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -658,6 +706,14 @@ public class GUI extends javax.swing.JFrame {
         examinarArchivo();
     }//GEN-LAST:event_btnExaminarActionPerformed
 
+    private void btnGenerarFraseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnGenerarFraseActionPerformed
+        generacionFrases();    
+    }//GEN-LAST:event_btnGenerarFraseActionPerformed
+
+    private void txtLongitudActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtLongitudActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtLongitudActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -715,6 +771,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
@@ -728,6 +785,7 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JRadioButton rbtnIngresar;
     private javax.swing.JRadioButton rbtnNoConsNoDup;
     private javax.swing.JTextField txtElementos;
+    private javax.swing.JTextField txtLongitud;
     private javax.swing.JTextArea txtResultado;
     private javax.swing.JTextArea txtTextoInicial;
     // End of variables declaration//GEN-END:variables

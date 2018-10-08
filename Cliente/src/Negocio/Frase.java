@@ -11,6 +11,7 @@ package Negocio;
  */
 public abstract class Frase {
     public int longitud;
+    public String alfabeto;
     
     
     public abstract String generar();
@@ -18,5 +19,9 @@ public abstract class Frase {
     public void setLongitud(int longitud) {
         this.longitud = longitud;
     }
-    
+
+    public void setAlfabeto(String alfabeto) {
+        this.alfabeto = alfabeto;
+    }
+       
 }

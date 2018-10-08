@@ -107,4 +107,13 @@ public class Controlador {
         dto.setTipoOperacion(operacion);
         return cliente.realizarPeticion(dto);
     }
+    
+    //Generar la frase
+    public String generacionFrase(String tipo,int longitud,String alfabeto){
+        FraseFactory f = new FraseFactory();
+        Frase f2 = FraseFactory.getFrase(TipoFrase.valueOf(tipo), longitud, alfabeto);
+        String resultado = f2.generar();
+        return resultado;
+    }
+    
 }

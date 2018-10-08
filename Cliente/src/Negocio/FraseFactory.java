@@ -10,15 +10,16 @@ package Negocio;
  * @author kathe
  */
 public class FraseFactory {
-    public static Frase getFrase(TipoFrase tipo, int longitud){
+    public static Frase getFrase(TipoFrase tipo, int longitud, String alfabeto){
         Frase f = null;
-        f.setLongitud(longitud);
+        
         switch(tipo){
             case FraseConsDup : f = new FraseConsDup();
             case FraseConsNoDup : f = new FraseConsNoDup();
             case FraseNoConsNoDup : f = new FraseNoConsNoDup();
-            //case FraseArchivo : ?? leer?
         }
+        f.setLongitud(longitud);
+        f.setAlfabeto(alfabeto);
         return f;
     } 
     
