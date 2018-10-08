@@ -7,6 +7,7 @@ package Vista;
 
 import Modelo.Alfabeto;
 import Negocio.Controlador;
+import Negocio.DAOtxt;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -15,6 +16,9 @@ import javax.swing.DefaultListModel;
 import javax.swing.JOptionPane;
 
 import comunicacion.DTO;
+import java.io.File;
+import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  *
@@ -22,7 +26,8 @@ import comunicacion.DTO;
  */
 public class GUI extends javax.swing.JFrame {
 
-    Controlador controlador;
+    private Controlador controlador;
+    private ArrayList<Alfabeto> alfabetos;
     
     DefaultListModel<String> modelMetodos, modelArchivos;
     
@@ -32,30 +37,48 @@ public class GUI extends javax.swing.JFrame {
 		
         lstMetodos = new javax.swing.JList<>(modelMetodos);
         lstArchivos = new javax.swing.JList<>(modelArchivos);
-		
+
         initComponents();
         txtTextoInicial.requestFocus();
         
-        controlador = new Controlador();
+        try{
+            controlador = new Controlador();
         
-        consultarAlgoritmos();
-        consultarArchivos();
-        
-        mostrarAlfabeto();
+            consultarAlgoritmos();
+            consultarArchivos();
+            consultarAlfabetos();
+            
+        }catch(NullPointerException ex){
+            JOptionPane.showMessageDialog(this, 
+                        "No se pudo establecer conexión con el servidor",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+            
+            btnAceptar.setEnabled(false);
+            btnEstablecerDefault.setEnabled(false);
+            chkUsarDefault.setEnabled(false);
+        }
     }
     
-    private void mostrarAlfabeto(){
-        Alfabeto alfabeto = new Alfabeto();
-        alfabeto.setElementos(controlador.consultarAlfabeto());
-        String elementos = alfabeto.getElementos();
-        String resultado = "";
+    private void consultarAlfabetos(){
+        alfabetos = controlador.consultarAlfabetos();
         
-        for(int i=0; i<elementos.length(); i++){
-            resultado += elementos.charAt(i) + ", ";
+        if(alfabetos == null){
+            JOptionPane.showMessageDialog(this, "Error al cargar alfabetos.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }else{
+            cbxAlfabeto.removeAllItems();
+            for(Alfabeto a : alfabetos){
+                cbxAlfabeto.addItem(a.getId());
+            }
+            
+            txtElementos.setText(alfabetos.get(0).getElementos());
         }
-        
-        resultado = resultado.substring(0, resultado.length()-2);
-        txtAlfabeto.setText(resultado);
+    }
+    
+    private void refrescarElementos(){
+        int seleccionado = cbxAlfabeto.getSelectedIndex();
+        if(seleccionado != -1)
+            txtElementos.setText(alfabetos.get(seleccionado).getElementos());
     }
     
     private void consultarAlgoritmos(){
@@ -120,7 +143,7 @@ public class GUI extends javax.swing.JFrame {
         return archivosSeleccionados;
     }
     
-    private void ejecutarOperacion(){
+    private void ejecutarOperacion(){        
         String textoInicial = txtTextoInicial.getText();
         if(!textoInicial.isEmpty()){
             ArrayList<Integer> algoritmosSeleccionados = ingresarAlgoritmos();
@@ -143,6 +166,16 @@ public class GUI extends javax.swing.JFrame {
                 dto.setNombresAlgoritmos(nombres);
                 dto.setTiposArchivos(archivosSeleccionados);
                 dto.setFechaHora(Calendar.getInstance());
+                
+                String nombreAlfabeto;
+                if(chkUsarDefault.isSelected()){
+                    nombreAlfabeto = cbxAlfabeto.getSelectedItem().toString();
+                    nombreAlfabeto = nombreAlfabeto.replace("(default)", "");
+                }else{
+                    nombreAlfabeto = cbxAlfabeto.getSelectedItem().toString();
+                }
+                System.out.println(nombreAlfabeto);
+                dto.setNombreAlfabeto(nombreAlfabeto);
 
                 //Resultados
                 ArrayList<String> resultados = controlador.operar(dto);
@@ -170,8 +203,73 @@ public class GUI extends javax.swing.JFrame {
         }
     }
     
+    private void establecerAlfabetoDefault(){
+        String nombre = cbxAlfabeto.getSelectedItem().toString();
+        System.out.println(nombre);
+        DTO dto = new DTO();
+        dto.setNombreAlfabeto(nombre);
+        
+        if(controlador.establecerAlfabetoDefault(dto)){
+            JOptionPane.showMessageDialog(this,
+                        "Establecido por defecto!", "Aceptado", JOptionPane.INFORMATION_MESSAGE);
+            
+            consultarAlfabetos();   //actualiza los alfabetos
+        }else{
+            JOptionPane.showMessageDialog(this,
+                        "Error al establecer por defecto", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
     
+    private void usarAlfabetoDefault(){
+        if(chkUsarDefault.isSelected()){
+            cbxAlfabeto.setEnabled(false);
+            btnEstablecerDefault.setEnabled(false);
+            for(int i=0; i<cbxAlfabeto.getItemCount(); i++){
+                String item = cbxAlfabeto.getItemAt(i);
+                if(item.contains("(default)")){
+                    cbxAlfabeto.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }else{
+            cbxAlfabeto.setEnabled(true);
+            btnEstablecerDefault.setEnabled(true);
+            cbxAlfabeto.setSelectedIndex(0);
+        }  
+    }
     
+    private void examinarArchivo(){
+        // muestra el cuadro de diálogo de archivos, para que el usuario pueda elegir el archivo a abrir
+        JFileChooser selectorArchivos = new JFileChooser();
+        selectorArchivos.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        //filtra el tipo de archivo seleccionado
+        FileNameExtensionFilter filtro = new FileNameExtensionFilter("Archivos de texto", "txt");
+        selectorArchivos.setFileFilter(filtro);
+
+        // indica cual fue la accion de usuario sobre el jfilechooser
+        int resultado = selectorArchivos.showOpenDialog(this);
+
+        File archivo = selectorArchivos.getSelectedFile(); // obtiene el archivo seleccionado
+
+        if ((archivo == null) || (archivo.getName().equals(""))) {
+            JOptionPane.showMessageDialog(this, "Archivo inválido", "Error", JOptionPane.ERROR_MESSAGE);
+        }else{
+            String texto = controlador.leerArchivo(archivo.getAbsolutePath());
+            
+            if(texto != null){
+                txtTextoInicial.setText(texto);
+            }else{
+                JOptionPane.showMessageDialog(this, "Error al abrir archivo.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+            
+        }
+    }
+
+    private void habilitarComponentes(boolean estado){
+        btnGenerarFrase.setEnabled(!estado);
+        btnExaminar.setEnabled(estado);
+        txtTextoInicial.setEnabled(estado);
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -182,6 +280,7 @@ public class GUI extends javax.swing.JFrame {
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
+        btngFrases = new javax.swing.ButtonGroup();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
@@ -194,7 +293,6 @@ public class GUI extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         txtResultado = new javax.swing.JTextArea();
         jLabel7 = new javax.swing.JLabel();
-        txtAlfabeto = new javax.swing.JTextField();
         cmbxMetodos = new javax.swing.JComboBox<>();
         cmbxArchivos = new javax.swing.JComboBox<>();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -205,19 +303,29 @@ public class GUI extends javax.swing.JFrame {
         btnQuitarArchivos = new javax.swing.JButton();
         rbtnEncriptar = new javax.swing.JRadioButton();
         rbtnDesencriptar = new javax.swing.JRadioButton();
+        cbxAlfabeto = new javax.swing.JComboBox<>();
+        txtElementos = new javax.swing.JTextField();
+        chkUsarDefault = new javax.swing.JCheckBox();
+        btnEstablecerDefault = new javax.swing.JButton();
+        rbtnConsDup = new javax.swing.JRadioButton();
+        rbtnConsNoDup = new javax.swing.JRadioButton();
+        rbtnNoConsNoDup = new javax.swing.JRadioButton();
+        rbtnIngresar = new javax.swing.JRadioButton();
+        btnExaminar = new javax.swing.JButton();
+        btnGenerarFrase = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         jLabel1.setText("Algoritmos");
 
-        jLabel2.setText("Texto");
+        jLabel2.setText("Frase");
 
         jLabel3.setText("Tipo archivo");
 
         jLabel4.setText("Métodos");
 
         txtTextoInicial.setColumns(20);
-        txtTextoInicial.setRows(5);
+        txtTextoInicial.setRows(1);
         txtTextoInicial.setCursor(new java.awt.Cursor(java.awt.Cursor.TEXT_CURSOR));
         jScrollPane1.setViewportView(txtTextoInicial);
 
@@ -277,6 +385,71 @@ public class GUI extends javax.swing.JFrame {
         buttonGroup1.add(rbtnDesencriptar);
         rbtnDesencriptar.setText("Desencriptar");
 
+        cbxAlfabeto.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cbxAlfabetoItemStateChanged(evt);
+            }
+        });
+
+        txtElementos.setEnabled(false);
+
+        chkUsarDefault.setText("Usar default");
+        chkUsarDefault.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkUsarDefaultActionPerformed(evt);
+            }
+        });
+
+        btnEstablecerDefault.setText("Establecer Default");
+        btnEstablecerDefault.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEstablecerDefaultActionPerformed(evt);
+            }
+        });
+
+        btngFrases.add(rbtnConsDup);
+        rbtnConsDup.setText("Consecutivos duplicados");
+        rbtnConsDup.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbtnConsDupActionPerformed(evt);
+            }
+        });
+
+        btngFrases.add(rbtnConsNoDup);
+        rbtnConsNoDup.setText("Consecutivos no duplicados");
+        rbtnConsNoDup.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbtnConsNoDupActionPerformed(evt);
+            }
+        });
+
+        btngFrases.add(rbtnNoConsNoDup);
+        rbtnNoConsNoDup.setText("No consecutivos no duplicados");
+        rbtnNoConsNoDup.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbtnNoConsNoDupActionPerformed(evt);
+            }
+        });
+
+        btngFrases.add(rbtnIngresar);
+        rbtnIngresar.setSelected(true);
+        rbtnIngresar.setText("Ingresar");
+        rbtnIngresar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbtnIngresarActionPerformed(evt);
+            }
+        });
+
+        btnExaminar.setText("Examinar");
+        btnExaminar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExaminarActionPerformed(evt);
+            }
+        });
+
+        btnGenerarFrase.setText("Generar");
+        btnGenerarFrase.setEnabled(false);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -286,21 +459,6 @@ public class GUI extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGap(53, 53, 53)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                        .addComponent(jLabel7)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel2)
-                                        .addGap(17, 17, 17)))
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
-                                    .addComponent(txtAlfabeto)))
-                            .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                .addGap(185, 185, 185)
-                                .addComponent(btnAceptar))
                             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -327,13 +485,52 @@ public class GUI extends javax.swing.JFrame {
                                         .addGap(10, 10, 10)
                                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(rbtnDesencriptar)
-                                            .addComponent(rbtnEncriptar)))))))
+                                            .addComponent(rbtnEncriptar)))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(jLabel7)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel2)
+                                        .addGap(17, 17, 17)))
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                            .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addGroup(layout.createSequentialGroup()
+                                                        .addComponent(rbtnConsDup)
+                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                                        .addComponent(rbtnConsNoDup)
+                                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                                    .addComponent(rbtnIngresar)
+                                                    .addComponent(rbtnNoConsNoDup))))
+                                        .addGap(18, 18, 18)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                            .addComponent(btnGenerarFrase, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                            .addComponent(btnExaminar, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)))
+                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                        .addComponent(txtElementos, javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                            .addComponent(cbxAlfabeto, javax.swing.GroupLayout.PREFERRED_SIZE, 149, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                            .addComponent(chkUsarDefault)
+                                            .addGap(18, 18, 18)
+                                            .addComponent(btnEstablecerDefault)))))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addGap(181, 181, 181)
+                                .addComponent(btnAceptar))
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                .addComponent(jLabel6)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(layout.createSequentialGroup()
                         .addGap(225, 225, 225)
-                        .addComponent(jLabel1))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(99, 99, 99)
-                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 284, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jLabel1)))
                 .addContainerGap(34, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -341,28 +538,42 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(18, 18, 18)
                 .addComponent(jLabel1)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel7)
+                    .addComponent(cbxAlfabeto, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chkUsarDefault)
+                    .addComponent(btnEstablecerDefault))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtElementos, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(rbtnConsDup)
+                    .addComponent(rbtnNoConsNoDup)
+                    .addComponent(btnGenerarFrase))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(rbtnIngresar)
+                    .addComponent(rbtnConsNoDup))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(48, 48, 48)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel7)
-                            .addComponent(txtAlfabeto, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel2)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, 22, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel3)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(cmbxArchivos, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(btnAnadirArchivos)
-                                    .addComponent(rbtnEncriptar)))
-                            .addComponent(jLabel5)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnExaminar)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(19, 19, 19)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(jLabel3)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(cmbxArchivos, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(btnAnadirArchivos)
+                                .addComponent(rbtnEncriptar)))
+                        .addComponent(jLabel5))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -377,15 +588,12 @@ public class GUI extends javax.swing.JFrame {
                         .addComponent(btnQuitarArchivos)
                         .addComponent(rbtnDesencriptar)))
                 .addGap(18, 18, 18)
+                .addComponent(btnAceptar)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(btnAceptar)
-                        .addGap(16, 16, 16))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(19, 19, 19)
-                        .addComponent(jLabel6)))
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(58, 58, 58))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel6))
+                .addGap(31, 31, 31))
         );
 
         pack();
@@ -410,6 +618,45 @@ public class GUI extends javax.swing.JFrame {
     private void btnQuitarArchivosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnQuitarArchivosActionPerformed
         quitarArchivo();
     }//GEN-LAST:event_btnQuitarArchivosActionPerformed
+
+    private void cbxAlfabetoItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cbxAlfabetoItemStateChanged
+        refrescarElementos();
+    }//GEN-LAST:event_cbxAlfabetoItemStateChanged
+
+    private void chkUsarDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkUsarDefaultActionPerformed
+        usarAlfabetoDefault();
+        if(chkUsarDefault.isSelected()){
+            cbxAlfabeto.setEnabled(false);
+            btnEstablecerDefault.setEnabled(false);
+        }else{
+            cbxAlfabeto.setEnabled(true);
+            btnEstablecerDefault.setEnabled(true);
+        }
+    }//GEN-LAST:event_chkUsarDefaultActionPerformed
+
+    private void btnEstablecerDefaultActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEstablecerDefaultActionPerformed
+        establecerAlfabetoDefault();
+    }//GEN-LAST:event_btnEstablecerDefaultActionPerformed
+
+    private void rbtnIngresarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbtnIngresarActionPerformed
+        habilitarComponentes(true);
+    }//GEN-LAST:event_rbtnIngresarActionPerformed
+
+    private void rbtnConsNoDupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbtnConsNoDupActionPerformed
+        habilitarComponentes(false);
+    }//GEN-LAST:event_rbtnConsNoDupActionPerformed
+
+    private void rbtnConsDupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbtnConsDupActionPerformed
+        habilitarComponentes(false);
+    }//GEN-LAST:event_rbtnConsDupActionPerformed
+
+    private void rbtnNoConsNoDupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbtnNoConsNoDupActionPerformed
+        habilitarComponentes(false);
+    }//GEN-LAST:event_rbtnNoConsNoDupActionPerformed
+
+    private void btnExaminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExaminarActionPerformed
+        examinarArchivo();
+    }//GEN-LAST:event_btnExaminarActionPerformed
 
     /**
      * @param args the command line arguments
@@ -450,9 +697,15 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JButton btnAceptar;
     private javax.swing.JButton btnAnadirArchivos;
     private javax.swing.JButton btnAnadirMetodo;
+    private javax.swing.JButton btnEstablecerDefault;
+    private javax.swing.JButton btnExaminar;
+    private javax.swing.JButton btnGenerarFrase;
     private javax.swing.JButton btnQuitarArchivos;
     private javax.swing.JButton btnQuitarMetodo;
+    private javax.swing.ButtonGroup btngFrases;
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JComboBox<String> cbxAlfabeto;
+    private javax.swing.JCheckBox chkUsarDefault;
     private javax.swing.JComboBox<String> cmbxArchivos;
     private javax.swing.JComboBox<String> cmbxMetodos;
     private javax.swing.JLabel jLabel1;
@@ -468,9 +721,13 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JList<String> lstArchivos;
     private javax.swing.JList<String> lstMetodos;
+    private javax.swing.JRadioButton rbtnConsDup;
+    private javax.swing.JRadioButton rbtnConsNoDup;
     private javax.swing.JRadioButton rbtnDesencriptar;
     private javax.swing.JRadioButton rbtnEncriptar;
-    private javax.swing.JTextField txtAlfabeto;
+    private javax.swing.JRadioButton rbtnIngresar;
+    private javax.swing.JRadioButton rbtnNoConsNoDup;
+    private javax.swing.JTextField txtElementos;
     private javax.swing.JTextArea txtResultado;
     private javax.swing.JTextArea txtTextoInicial;
     // End of variables declaration//GEN-END:variables
