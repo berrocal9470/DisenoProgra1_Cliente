@@ -17,9 +17,15 @@ import comunicacion.TipoOperacion;
  */
 public class Controlador {
     private SocketCliente cliente;
+    private DAOtxt txt;
     
     public Controlador(){
         cliente = new SocketCliente();
+        txt = new DAOtxt();
+    }
+    
+    public String leerArchivo(String nombreArchivo){
+        return txt.consultar(nombreArchivo);
     }
     
     /**
@@ -46,7 +52,19 @@ public class Controlador {
      * @return ArrayList de alfabetos existentes en el servidor
      */
     public ArrayList<Alfabeto> consultarAlfabetos(){
-        return null;
+        DTO dto = realizarPeticion(new DTO(), TipoOperacion.CONSULTAR_ALFABETOS);
+        
+        if(dto.getAlfabetos() == null){
+            return null;
+        }else{
+            ArrayList<Alfabeto> alfabetos = new ArrayList<>();
+            
+            for(Object o : dto.getAlfabetos()){
+                alfabetos.add((Alfabeto)o);
+            }
+            
+            return alfabetos;
+        }
     }
     
     /**
@@ -65,6 +83,18 @@ public class Controlador {
     public ArrayList<String> consultarArchivosSalida(){
         DTO dto = realizarPeticion(new DTO(), TipoOperacion.CONSULTAR_ARCHIVOS);
         return dto.getTiposArchivos();
+    }
+    
+    /**
+     * Solicita establecer el alfabeto default
+     * Toma el resultado de el ArrayList resultados
+     * Si es nulo no tuvo éxito, si tiene un ArrayList vacío tuvo éxito
+     * @param dto objeto con el id del alfabeto a establecer por defecto
+     * @return true establecido por defecto, false no establecido por defecto
+     */
+    public boolean establecerAlfabetoDefault(DTO dto){
+        dto = realizarPeticion(dto, TipoOperacion.ESTABLECER_ALFABETO_DEFAULT);
+        return dto.getResultados() != null;
     }
     
     /**
