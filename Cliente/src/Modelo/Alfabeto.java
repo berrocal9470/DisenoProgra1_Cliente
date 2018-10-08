@@ -1,6 +1,8 @@
 package Modelo;
 
-public class Alfabeto {
+import java.io.Serializable;
+
+public class Alfabeto implements Serializable{
 
     private String elementos;
     private String id;
