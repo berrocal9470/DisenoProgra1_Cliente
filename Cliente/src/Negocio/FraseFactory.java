@@ -10,8 +10,9 @@ package Negocio;
  * @author kathe
  */
 public class FraseFactory {
-    public static Frase getFrase(TipoFrase tipo){
+    public static Frase getFrase(TipoFrase tipo, int longitud){
         Frase f = null;
+        f.setLongitud(longitud);
         switch(tipo){
             case FraseConsDup : f = new FraseConsDup();
             case FraseConsNoDup : f = new FraseConsNoDup();
