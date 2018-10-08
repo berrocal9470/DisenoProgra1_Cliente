@@ -10,6 +10,6 @@ package Negocio;
  * @author kathe
  */
 public enum TipoFrase {
-    FraseConsDup,FraseConsNoDup,FraseNoConsNoDup,FraseArchivo
+    FraseConsDup,FraseConsNoDup,FraseNoConsNoDup
     
 }
